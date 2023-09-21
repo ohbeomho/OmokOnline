@@ -14,12 +14,12 @@ class Room {
 	constructor(name) {
 		this.name = name;
 		this.users = [];
-		this.board = [];
+		this.board = new Array(15);
 		this.turn = 0;
 
 		// 15x15
 		for (let i = 0; i < 15; i++) {
-			this.board.push(new Array(15));
+			this.board[i] = new Array(15).fill(undefined);
 		}
 	}
 
@@ -32,25 +32,53 @@ class Room {
 
 	checkWin() {
 		let winner;
+
 		for (let y = 0; y < 15; y++) {
 			const line = this.board[y];
 
-			if (line.filter((v) => typeof v === "number").length >= 5) {
-				for (let x = 0; x < 10; x++) {
-					if (line.slice(x, x + 5).every((v) => v)) {
-						winner = users[line[x]];
-					}
+			for (let x = 0; x <= 10; x++) {
+				const five = line.slice(x, x + 5);
+
+				if (five.every((v) => typeof v === "number" && v === five[0])) {
+					winner = users[five[0]];
 				}
 			}
 		}
 
-		// TODO: 세로, 대각선 확인
+		for (let x = 0; x < 15; x++) {
+			const line = [];
+			for (let y = 0; y < 15; y++) {
+				line.push(this.board[y][x]);
+			}
+
+			for (let y = 0; y <= 10; y++) {
+				const five = line.slice(y, y + 5);
+
+				if (five.every((v) => typeof v === "number" && v === five[0])) {
+					winner = users[five[0]];
+				}
+			}
+		}
+
+		for (let y = 0; y <= 10; y++) {
+			for (let x = 0; x <= 10; x++) {
+				const five = [];
+				for (let i = 0; i < 5; i++) {
+					five.push(this.board[y + i][x + i]);
+				}
+
+				if (five.every((v) => typeof v === "number" && v === five[0])) {
+					winner = users[five[0]];
+				}
+			}
+		}
 
 		if (winner) {
 			wsServer.to(this.name).emit("win", winner);
 			rooms.splice(rooms.indexOf(this), 1);
 		} else if (!winner && !this.board.find((v) => typeof v !== "number")) {
 			wsServer.to(this.name).emit("win", -1);
+			rooms.splice(rooms.indexOf(this), 1);
 		}
 	}
 }
@@ -78,7 +106,9 @@ wsServer.on("connection", (socket) => {
 			socket.join(roomName);
 
 			if (room.users.length === 2) {
-				socket.emit("room", { type: "start" });
+				room.users.forEach((u, i) =>
+					wsServer.to(u).emit("room", { type: "start", turn: i })
+				);
 			} else {
 				socket.emit("room", { type: "success" });
 			}
