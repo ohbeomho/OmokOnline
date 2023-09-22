@@ -1,10 +1,9 @@
-import express from "express";
-import http from "http";
-import path from "path";
-import { Server } from "socket.io";
-import { config } from "dotenv";
+require("dotenv").config();
 
-config();
+const express = require("express");
+const http = require("http");
+const path = require("path");
+const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
@@ -142,8 +141,9 @@ wsServer.on("connection", (socket) => {
 app.use("/", express.static(path.join(__dirname, "pages")));
 app.use("/styles", express.static(path.join(__dirname, "css")));
 app.use("/scripts", express.static(path.join(__dirname, "js")));
+app.use("/assets", express.static(path.join(__dirname, "assets")));
 
-app.get("/room_list", (req, res) => res.json(rooms));
+app.get("/room_list", (req, res) => res.json(rooms.filter((r) => r.users.length < 2)));
 app.get("/create_room/:roomName", (req, res) => {
 	const { roomName } = req.params;
 	rooms.push(new Room(roomName));

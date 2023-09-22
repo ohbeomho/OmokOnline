@@ -1,0 +1,17 @@
+html,
+body {
+	margin: 0;
+}
+
+body {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	background-color: rgb(219, 219, 219);
+}
+
+.profile {
+	border-radius: 50%;
+}
