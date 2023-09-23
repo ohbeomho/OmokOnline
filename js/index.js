@@ -1,5 +1,6 @@
 const roomList = document.querySelector(".room-list");
 const refreshButton = document.getElementById("refresh");
+const createRoomButton = document.getElementById("create");
 
 function createRoomElement(roomName, user) {
 	const roomElement = document.createElement("div");
@@ -10,10 +11,15 @@ function createRoomElement(roomName, user) {
 			<img class="profile" src="/assets/user.png" />
 			${user}
 		</div>
+		<div class="buttons">
+			<button class="join">참가</button>
+		</div>
 	`;
-	roomElement.addEventListener("click", () => {
-		// TODO: confirm join
-	});
+	roomElement
+		.querySelector("button")
+		.addEventListener("click", () =>
+			location.assign("/game.html?room=" + encodeURIComponent(roomName))
+		);
 	roomList.appendChild(roomElement);
 }
 
@@ -35,11 +41,25 @@ function getRoomList() {
 				return;
 			}
 
+			console.log(rooms);
+
 			rooms.forEach((r) => createRoomElement(r.name, r.users[0]));
 		})
 		.catch((err) => alert(err))
 		.finally(() => (fetching = false));
 }
 
+function createRoom() {
+	const roomName = prompt("방 이름을 입력해주세요.").trim();
+	if (!roomName) {
+		return;
+	}
+
+	fetch("/create_room/" + roomName)
+		.then(() => location.assign("/game.html?room=" + roomName))
+		.catch((err) => alert(err));
+}
+
 getRoomList();
 refreshButton.addEventListener("click", getRoomList);
+createRoomButton.addEventListener("click", createRoom);

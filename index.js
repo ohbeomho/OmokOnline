@@ -147,7 +147,7 @@ app.get("/room_list", (req, res) => res.json(rooms.filter((r) => r.users.length 
 app.get("/create_room/:roomName", (req, res) => {
 	const { roomName } = req.params;
 	rooms.push(new Room(roomName));
-	res.redirect("/game.html?" + roomName);
+	res.sendStatus(200);
 });
 
 app.listen(process.env.PORT, () => console.log("Server is running on port " + process.env.PORT));
