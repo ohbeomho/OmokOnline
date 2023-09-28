@@ -17,68 +17,51 @@ class Room {
 		this.turn = 0;
 
 		// 15x15
-		for (let i = 0; i < 15; i++) {
-			this.board[i] = new Array(15).fill(undefined);
-		}
+		for (let i = 0; i < 15; i++) this.board[i] = new Array(15).fill(undefined);
 	}
 
-	place(x, y) {
+	place(x, y, id) {
+		if (this.users.indexOf(id) !== this.turn) return;
+
 		this.board[y][x] = this.turn;
+		wsServer.to(this.users).emit("game", { type: "place", x, y, turn: this.turn });
 		this.turn = this.turn === 1 ? 0 : 1;
-		wsServer.to(this.users[this.turn]).emit("place", x, y);
 		this.checkWin();
 	}
 
 	checkWin() {
-		let winner;
+		const win = (winner) => {
+			wsServer.to(this.name).emit("game", { type: "win", winner });
+			rooms.splice(rooms.indexOf(this), 1);
+		};
 
 		for (let y = 0; y < 15; y++) {
 			const line = this.board[y];
 
 			for (let x = 0; x <= 10; x++) {
 				const five = line.slice(x, x + 5);
-
-				if (five.every((v) => typeof v === "number" && v === five[0])) {
-					winner = users[five[0]];
-				}
+				if (five.every((v) => typeof v === "number" && v === five[0])) win(users[five[0]]);
 			}
 		}
 
 		for (let x = 0; x < 15; x++) {
 			const line = [];
-			for (let y = 0; y < 15; y++) {
-				line.push(this.board[y][x]);
-			}
-
+			for (let y = 0; y < 15; y++) line.push(this.board[y][x]);
 			for (let y = 0; y <= 10; y++) {
 				const five = line.slice(y, y + 5);
-
-				if (five.every((v) => typeof v === "number" && v === five[0])) {
-					winner = users[five[0]];
-				}
+				if (five.every((v) => typeof v === "number" && v === five[0])) win(users[five[0]]);
 			}
 		}
 
 		for (let y = 0; y <= 10; y++) {
 			for (let x = 0; x <= 10; x++) {
 				const five = [];
-				for (let i = 0; i < 5; i++) {
-					five.push(this.board[y + i][x + i]);
-				}
-
-				if (five.every((v) => typeof v === "number" && v === five[0])) {
-					winner = users[five[0]];
-				}
+				for (let i = 0; i < 5; i++) five.push(this.board[y + i][x + i]);
+				if (five.every((v) => typeof v === "number" && v === five[0])) win(users[five[0]]);
 			}
 		}
 
-		if (winner) {
-			wsServer.to(this.name).emit("win", winner);
-			rooms.splice(rooms.indexOf(this), 1);
-		} else if (!winner && !this.board.find((v) => typeof v !== "number")) {
-			wsServer.to(this.name).emit("win", -1);
-			rooms.splice(rooms.indexOf(this), 1);
-		}
+		if (!this.board.find((v) => typeof v !== "number")) win(undefined);
 	}
 }
 
@@ -106,7 +89,13 @@ wsServer.on("connection", (socket) => {
 
 			if (room.users.length === 2) {
 				room.users.forEach((u, i) =>
-					wsServer.to(u).emit("room", { type: "start", turn: i })
+					wsServer
+						.to(u)
+						.emit("room", {
+							type: "start",
+							turn: i,
+							opponent: room.users[i === 0 ? 1 : 0]
+						})
 				);
 			} else {
 				socket.emit("room", { type: "success" });
@@ -127,12 +116,12 @@ wsServer.on("connection", (socket) => {
 	});
 
 	const startGame = () => {
-		socket.on("place", room.place);
+		socket.on("game", (x, y) => room.place(x, y, socket.id));
 		socket.on("disconnect", () => {
-			socket.emit(
-				"win",
-				room.users.find((v) => v !== socket.id)
-			);
+			socket.emit("game", {
+				type: "win",
+				winner: room.users.find((v) => v !== socket.id)
+			});
 			rooms.splice(rooms.indexOf(this), 1);
 		});
 	};

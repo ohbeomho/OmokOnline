@@ -1,0 +1,41 @@
+.container {
+	width: 90vw;
+	max-width: 1000px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.black,
+.white {
+	padding: 20px;
+	border-radius: 10px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+}
+
+.black,
+.black.me::before {
+	background-color: black;
+	color: white;
+}
+
+.white,
+.white.me::before {
+	background-color: white;
+}
+
+.black.me::before,
+.white.me::before {
+	content: "나";
+	display: block;
+	position: absolute;
+	font-size: 16px;
+	padding: 4px;
+	top: -44px;
+	border-radius: 3px 3px 0 0;
+}
