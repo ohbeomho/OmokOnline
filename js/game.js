@@ -1,5 +1,7 @@
 const socket = io();
-const roomName = decodeURIComponent(new URLSearchParams(location.search).get("room"));
+const params = new URLSearchParams(location.search);
+const roomName = decodeURIComponent(params.get("room"));
+const username = decodeURIComponent(params.get("user"));
 const message = document.querySelector(".message");
 const black = document.querySelector("div.black");
 const white = document.querySelector("div.white");
@@ -30,6 +32,8 @@ function makeTable() {
 
 				socket.emit("game", x, y);
 				placed = true;
+
+				message.innerText = "상대의 차례입니다.";
 			});
 			column.classList.add(myTurn === 0 ? "black" : "white");
 			row.appendChild(column);
@@ -44,13 +48,15 @@ function startGame() {
 	const arr = [black, white];
 	arr[myTurn].classList.add("me");
 
-	const idArr = arr.map((e) => e.querySelector(".id"));
+	const usernameArr = arr.map((e) => e.querySelector(".username"));
 	if (myTurn === 0) {
-		idArr[0].innerText = socket.id;
-		idArr[1].innerText = opponent;
+		usernameArr[0].innerText = username;
+		usernameArr[1].innerText = opponent.username;
+		message.innerText = "당신의 차례입니다.";
 	} else {
-		idArr[1].innerText = socket.id;
-		idArr[0].innerText = opponent;
+		usernameArr[1].innerText = username;
+		usernameArr[0].innerText = opponent.username;
+		message.innerText = "상대의 차례입니다.";
 	}
 
 	socket.on("game", (data) => {
@@ -72,15 +78,30 @@ function startGame() {
 }
 
 function win(winner) {
-	if (winner === socket.id) alert("승리!");
-	else if (winner === undefined) alert("무승부!");
-	else alert("패배..");
+	const returnButton = document.createElement("button");
+	returnButton.innerText = "메인 화면으로";
+	returnButton.addEventListener("click", () => location.assign("/"));
 
-	location.assign("/");
+	if (winner === undefined) message.innerHTML = "<h3>무승부입니다</h3>";
+	else {
+		message.innerHTML = `
+			<h2>${winner.username}의 승리!</h2>
+			<p>당신이 ${
+				winner.id === socket.id
+					? "<span style='color: rgb(50, 200, 50)'>승리</span>하였습니다."
+					: "<span style='color: rgb(200, 0, 0)'>패배</span>하였습니다."
+			}</p>
+		`;
+	}
+
+	message.appendChild(returnButton);
 }
 
 function place(x, y, turn) {
-	if (turn !== myTurn) placed = false;
+	if (turn !== myTurn) {
+		placed = false;
+		message.innerText = "당신의 차례입니다.";
+	}
 
 	const target = Array.from(
 		Array.from(clickTable.querySelectorAll("tr"))[y].querySelectorAll("td")
@@ -98,7 +119,7 @@ socket.on("room", (data) => {
 			location.assign("/");
 			break;
 		case "success":
-			message.innerText = "상대 접속 대기중...";
+			message.innerHTML = "<h2>상대 접속 대기중...</h2>";
 			break;
 		case "start":
 			({ turn: myTurn, opponent } = data);
@@ -108,4 +129,4 @@ socket.on("room", (data) => {
 		default:
 	}
 });
-socket.emit("room", roomName);
+socket.emit("room", roomName, username);

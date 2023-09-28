@@ -20,11 +20,16 @@ class Room {
 		for (let i = 0; i < 15; i++) this.board[i] = new Array(15).fill(undefined);
 	}
 
-	place(x, y, id) {
-		if (this.users.indexOf(id) !== this.turn || x > 14 || y > 14 || x < 0 || y < 0) return;
+	place(x, y, user) {
+		if (this.users.indexOf(user) !== this.turn || x > 14 || y > 14 || x < 0 || y < 0) return;
 
 		this.board[y][x] = this.turn;
-		io.to(this.users).emit("game", { type: "place", x, y, turn: this.turn });
+		io.to(this.users.map((user) => user.id)).emit("game", {
+			type: "place",
+			x,
+			y,
+			turn: this.turn
+		});
 		this.turn = this.turn === 1 ? 0 : 1;
 		this.checkWin();
 	}
@@ -83,9 +88,9 @@ app.get("/create_room/:roomName", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-	let room;
+	let room, user;
 
-	socket.once("room", (roomName) => {
+	socket.once("room", (roomName, username) => {
 		const targetRoom = rooms.find((r) => r.name === roomName);
 		if (!targetRoom)
 			socket.emit("room", {
@@ -99,12 +104,13 @@ io.on("connection", (socket) => {
 			});
 		else {
 			room = targetRoom;
-			room.users.push(socket.id);
+			user = { id: socket.id, username };
+			room.users.push(user);
 			socket.join(roomName);
 
 			if (room.users.length === 2)
 				room.users.forEach((u, i) =>
-					io.to(u).emit("room", {
+					io.to(u.id).emit("room", {
 						type: "start",
 						turn: i,
 						opponent: room.users[i === 0 ? 1 : 0]
@@ -124,12 +130,12 @@ io.on("connection", (socket) => {
 		socket.removeAllListeners("start");
 	});
 
-	const startGame = () => socket.on("game", (x, y) => room.place(x, y, socket.id));
+	const startGame = () => socket.on("game", (x, y) => room.place(x, y, user));
 
 	socket.on("disconnect", () => {
 		if (room && room.users.length > 1) {
-			const other = room.users.find((v) => v !== socket.id);
-			socket.to(other).emit("game", {
+			const other = room.users.find((v) => v.id !== socket.id);
+			socket.to(other.id).emit("game", {
 				type: "win",
 				winner: other
 			});
