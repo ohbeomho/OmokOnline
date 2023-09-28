@@ -35,8 +35,8 @@ class Room {
 	}
 
 	checkWin() {
-		const win = (winner) => {
-			io.to(this.name).emit("game", { type: "win", winner });
+		const win = (winner, highlight) => {
+			io.to(this.name).emit("game", { type: "win", winner, highlight });
 			rooms.splice(rooms.indexOf(this), 1);
 		};
 
@@ -46,7 +46,7 @@ class Room {
 			for (let x = 0; x <= 10; x++) {
 				const five = line.slice(x, x + 5);
 				if (five.every((v) => typeof v === "number" && v === five[0]))
-					win(this.users[five[0]]);
+					win(this.users[five[0]], { type: "h", x, y });
 			}
 		}
 
@@ -56,7 +56,7 @@ class Room {
 			for (let y = 0; y <= 10; y++) {
 				const five = line.slice(y, y + 5);
 				if (five.every((v) => typeof v === "number" && v === five[0]))
-					win(this.users[five[0]]);
+					win(this.users[five[0]], { type: "v", x, y });
 			}
 		}
 
@@ -65,11 +65,11 @@ class Room {
 				const five = [];
 				for (let i = 0; i < 5; i++) five.push(this.board[y + i][x + i]);
 				if (five.every((v) => typeof v === "number" && v === five[0]))
-					win(this.users[five[0]]);
+					win(this.users[five[0]], { type: "d", x, y });
 			}
 		}
 
-		if (!this.board.find((v) => typeof v !== "number")) win(undefined);
+		if (!this.board.find((v) => typeof v !== "number")) win(undefined, undefined);
 	}
 }
 
@@ -135,10 +135,7 @@ io.on("connection", (socket) => {
 	socket.on("disconnect", () => {
 		if (room && room.users.length > 1) {
 			const other = room.users.find((v) => v.id !== socket.id);
-			socket.to(other.id).emit("game", {
-				type: "win",
-				winner: other
-			});
+			socket.to(other.id).emit("game", { type: "disconnect" });
 		}
 		rooms.splice(rooms.indexOf(this), 1);
 	});

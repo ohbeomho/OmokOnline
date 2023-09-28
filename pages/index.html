@@ -1,58 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Omok Online</title>
-		<link rel="stylesheet" href="/styles/main.css" />
-		<link rel="stylesheet" href="/styles/index.css" />
-	</head>
 
-	<body>
-		<h1>Omok Online - Beta</h1>
-		<div class="info">
-			<p>Source on <a href="https://github.com/OhBeomho/OmokOnline">Github</a></p>
-		</div>
-		<div class="container">
-			<div class="title">
-				<b>방 목록</b>
-				<div>
-					<button id="refresh">새로고침 &#8635;</button>
-					<button id="create">방 만들기</button>
-				</div>
-			</div>
-			<div class="room-list">
-				<div class="room">
-					<div class="name">test</div>
-					<div class="user">
-						<img src="/assets/user.png" class="profile" />
-						tester
-					</div>
-				</div>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Omok Online</title>
+	<link rel="stylesheet" href="/styles/main.css" />
+	<link rel="stylesheet" href="/styles/index.css" />
+</head>
+
+<body>
+	<h1>Omok Online - Beta</h1>
+	<div class="info">
+		<p>Source on <a href="https://github.com/OhBeomho/OmokOnline">Github</a></p>
+	</div>
+	<div class="container">
+		<div class="title">
+			<b>방 목록</b>
+			<div>
+				<button id="refresh">새로고침 &#8635;</button>
+				<button id="create">방 만들기</button>
 			</div>
 		</div>
+		<div class="room-list">
+			<div class="room">
+				<div class="name">test</div>
+				<div class="user">
+					<img src="/assets/user.png" class="profile" />
+					tester
+				</div>
+			</div>
+		</div>
+	</div>
 
-		<dialog id="createRoom">
-			<h2>방 만들기</h2>
-			<p>
-				<label for="roomName">방 이름</label>
-				<input type="text" id="roomName" placeholder="방 이름을 입력해 주세요." />
-			</p>
-			<p>
-				<label for="createUsername">사용자명</label>
-				<input type="text" id="createUsername" placeholder="사용자명을 입력해 주세요." />
-			</p>
-			<button class="close">확인</button>
-		</dialog>
-		<dialog id="joinRoom">
-			<h2 id="joinRoomName"></h2>
-			<p>
-				<label for="joinUsername">사용자명</label>
-				<input type="text" id="joinUsername" placeholder="사용자명을 입력해 주세요." />
-			</p>
-			<button class="close">확인</button>
-		</dialog>
+	<dialog id="createRoom">
+		<h2>방 만들기</h2>
+		<p>
+			<label for="roomName">방 이름</label>
+			<input type="text" id="roomName" placeholder="방 이름을 입력해 주세요." />
+		</p>
+		<p>
+			<label for="createUsername">사용자명</label>
+			<input type="text" id="createUsername" placeholder="사용자명을 입력해 주세요." />
+		</p>
+		<p>
+			<button class="ok">확인</button>
+			<button class="close">취소</button>
+		</p>
+	</dialog>
+	<dialog id="joinRoom">
+		<h2 id="joinRoomName"></h2>
+		<p>
+			<label for="joinUsername">사용자명</label>
+			<input type="text" id="joinUsername" placeholder="사용자명을 입력해 주세요." />
+		</p>
+		<p>
+			<button class="ok">확인</button>
+			<button class="close">취소</button>
+		</p>
+	</dialog>
 
-		<script src="/scripts/index.js"></script>
-	</body>
+	<script src="/scripts/index.js"></script>
+</body>
+
 </html>

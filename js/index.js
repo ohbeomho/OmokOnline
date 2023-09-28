@@ -66,10 +66,10 @@ createRoomButton.addEventListener("click", () => createRoomDialog.showModal());
 
 const closeButtons = document.querySelectorAll("button.close");
 closeButtons.forEach((button) =>
-	button.addEventListener("click", () => button.parentElement.close())
+	button.addEventListener("click", () => button.parentElement.parentElement.close())
 );
 
-createRoomDialog.addEventListener("close", (e) => {
+createRoomDialog.querySelector("button.ok").addEventListener("click", (e) => {
 	const roomName = roomNameInput.value.trim();
 	const username = createUsernameInput.value.trim();
 
@@ -79,7 +79,6 @@ createRoomDialog.addEventListener("close", (e) => {
 	else if (!username) errorMessage = "사용자명을 입력해 주세요.";
 
 	if (errorMessage) {
-		e.preventDefault();
 		alert(errorMessage);
 		return;
 	}
@@ -92,17 +91,20 @@ createRoomDialog.addEventListener("close", (e) => {
 				)}`
 			)
 		)
-		.catch((err) => alert(err));
+		.catch((err) => alert(err))
+		.finally(() => createRoomDialog.close());
 });
 
-joinRoomDialog.addEventListener("close", (e) => {
+joinRoomDialog.querySelector("button.ok").addEventListener("click", (e) => {
 	const username = joinUsernameInput.value.trim();
 
 	if (!username) {
-		e.preventDefault();
 		alert("사용자명을 입력해 주세요.");
 		return;
-	} else if (!joinRoomName) return;
+	} else if (!joinRoomName) {
+		joinRoomDialog.close();
+		return;
+	}
 
 	location.assign(
 		`/game.html?room=${encodeURIComponent(joinRoomName)}&user=${encodeURIComponent(username)}`

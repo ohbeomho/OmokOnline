@@ -16,6 +16,11 @@ div.white {
 	position: relative;
 }
 
+div.black.win,
+div.white.win {
+	box-shadow: 0 0 0 4px rgb(50, 200, 50);
+}
+
 div.black,
 div.black.me::before {
 	background-color: black;
@@ -33,9 +38,16 @@ div.white.me::before {
 	display: block;
 	position: absolute;
 	font-size: 16px;
-	padding: 4px;
-	top: -24px;
+	padding: 2px 4px;
+	top: -28px;
 	border-radius: 3px 3px 0 0;
+}
+
+div.black.me.win::before,
+div.white.me.win::before {
+	top: -33px;
+	border: 4px solid rgb(50, 200, 50);
+	border-bottom: none;
 }
 
 table.click {

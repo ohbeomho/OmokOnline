@@ -7,8 +7,11 @@ const black = document.querySelector("div.black");
 const white = document.querySelector("div.white");
 const clickTable = document.querySelector("table.click");
 const viewTable = document.querySelector("table.view");
+const clickElements = [];
 let myTurn,
+	myElement,
 	opponent,
+	opponentElement,
 	placed = false;
 
 function makeTable() {
@@ -23,7 +26,8 @@ function makeTable() {
 	}
 
 	for (let y = 0; y < 15; y++) {
-		const row = document.createElement("tr");
+		const tableRow = document.createElement("tr");
+		const row = [];
 
 		for (let x = 0; x < 15; x++) {
 			const column = document.createElement("td");
@@ -36,17 +40,21 @@ function makeTable() {
 				message.innerText = "상대의 차례입니다.";
 			});
 			column.classList.add(myTurn === 0 ? "black" : "white");
-			row.appendChild(column);
+			tableRow.appendChild(column);
+			row.push(column);
 		}
 
-		clickTable.appendChild(row);
+		clickTable.appendChild(tableRow);
+		clickElements.push(row);
 	}
 }
 
 function startGame() {
 	message.innerText = "";
 	const arr = [black, white];
-	arr[myTurn].classList.add("me");
+	myElement = arr[myTurn];
+	opponentElement = myElement === black ? white : black;
+	myElement.classList.add("me");
 
 	const usernameArr = arr.map((e) => e.querySelector(".username"));
 	if (myTurn === 0) {
@@ -64,11 +72,15 @@ function startGame() {
 
 		switch (data.type) {
 			case "win":
-				win(data.winner);
+				const { winner, highlight } = data;
+				win(winner, highlight);
 				break;
 			case "place":
 				const { x, y, turn } = data;
 				place(x, y, turn);
+				break;
+			case "disconnect":
+				disconnected();
 			default:
 		}
 	});
@@ -77,10 +89,12 @@ function startGame() {
 	document.querySelector(".container").style.display = "flex";
 }
 
-function win(winner) {
-	const returnButton = document.createElement("button");
-	returnButton.innerText = "메인 화면으로";
-	returnButton.addEventListener("click", () => location.assign("/"));
+const returnButton = document.createElement("button");
+returnButton.innerText = "메인 화면으로";
+returnButton.addEventListener("click", () => location.assign("/"));
+
+function win(winner, highlight) {
+	removeClickEvents();
 
 	if (winner === undefined) message.innerHTML = "<h3>무승부입니다</h3>";
 	else {
@@ -92,9 +106,51 @@ function win(winner) {
 					: "<span style='color: rgb(200, 0, 0)'>패배</span>하였습니다."
 			}</p>
 		`;
+
+		(winner.id === socket.id ? myElement : opponentElement).classList.add("win");
+
+		const { x: hx, y: hy, type } = highlight;
+		let highlightElements;
+
+		switch (type) {
+			case "h":
+				highlightElements = clickElements[hy].slice(hx, hx + 5);
+				break;
+			case "v":
+				highlightElements = [];
+				for (let y = hy; y <= hy + 4; y++) highlightElements.push(clickElements[y][hx]);
+				break;
+			case "d":
+				highlightElements = [];
+				for (let i = 0; i < 5; i++) highlightElements.push(clickElements[hy + i][hx + i]);
+			default:
+		}
+
+		highlightElements.forEach(
+			(element) => (element.style.boxShadow = `0 0 0 4px rgb(50, 200, 50)`)
+		);
 	}
 
 	message.appendChild(returnButton);
+	socket.disconnect();
+}
+
+function disconnected() {
+	message.innerHTML = "<h2>상대의 접속이 끊겼습니다.</h2>";
+	message.appendChild(returnButton);
+	socket.disconnect();
+	removeClickEvents();
+}
+
+function removeClickEvents() {
+	clickTable.querySelectorAll("tr").forEach((row, y) =>
+		row.querySelectorAll("td").forEach((column, x) => {
+			const newNode = document.createElement("td");
+			newNode.className = column.className;
+			column.replaceWith(newNode);
+			clickElements[y][x] = newNode;
+		})
+	);
 }
 
 function place(x, y, turn) {
@@ -103,13 +159,12 @@ function place(x, y, turn) {
 		message.innerText = "당신의 차례입니다.";
 	}
 
-	const target = Array.from(
-		Array.from(clickTable.querySelectorAll("tr"))[y].querySelectorAll("td")
-	)[x];
+	const target = clickElements[y][x];
 	const clone = target.cloneNode(true);
 	clone.className = "";
 	clone.classList.add("placed", turn === 0 ? "black" : "white");
 	target.replaceWith(clone);
+	clickElements[y][x] = clone;
 }
 
 socket.on("room", (data) => {
@@ -120,6 +175,7 @@ socket.on("room", (data) => {
 			break;
 		case "success":
 			message.innerHTML = "<h2>상대 접속 대기중...</h2>";
+			message.appendChild(returnButton);
 			break;
 		case "start":
 			({ turn: myTurn, opponent } = data);
