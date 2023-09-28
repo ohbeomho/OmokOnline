@@ -3,7 +3,36 @@ const roomName = decodeURIComponent(new URLSearchParams(location.search).get("ro
 const message = document.querySelector(".message");
 const black = document.querySelector(".black");
 const white = document.querySelector(".white");
-let myTurn, opponent;
+const clickTable = document.querySelector("table.click");
+const viewTable = document.querySelector("table.view");
+let myTurn,
+	opponent,
+	placed = false;
+
+function makeTable() {
+	for (let y = 0; y < 14; y++) {
+		const row = document.createElement("tr");
+
+		for (let x = 0; x < 14; x++) {
+			row.appendChild(document.createElement("td"));
+		}
+
+		viewTable.appendChild(row);
+	}
+
+	for (let y = 0; y < 15; y++) {
+		const row = document.createElement("tr");
+
+		for (let x = 0; x < 15; x++) {
+			const column = document.createElement("td");
+			column.addEventListener("click", () => opponent && socket.emit("game", x, 14));
+			column.classList.add(myTurn === 0 ? "black" : "white");
+			row.appendChild(column);
+		}
+
+		clickTable.appendChild(row);
+	}
+}
 
 function startGame() {
 	message.innerText = "";
@@ -29,6 +58,9 @@ function startGame() {
 			default:
 		}
 	});
+
+	makeTable();
+	document.querySelector(".container").style.display = "flex";
 }
 
 function win(winner) {
@@ -40,7 +72,13 @@ function win(winner) {
 }
 
 function place(x, y, turn) {
-	// TODO: table 의 x, y 위치에 표시
+	if (turn !== myTurn) placed = false;
+
+	const target = clickTable.querySelectorAll("tr")[y].querySelectorAll("td")[x];
+	const clone = target.cloneNode(true);
+	clone.className = "";
+	clone.classList.add("placed", turn === 0 ? "black" : "white");
+	target.replaceWith(clone);
 }
 
 socket.on("room", (data) => {
@@ -54,6 +92,8 @@ socket.on("room", (data) => {
 			break;
 		case "start":
 			({ myTurn, opponent } = data);
+			console.log(myTurn);
+			socket.emit("start");
 			startGame();
 		default:
 	}

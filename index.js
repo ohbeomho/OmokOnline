@@ -7,7 +7,7 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const wsServer = new Server(server);
+const io = new Server(server);
 
 class Room {
 	constructor(name) {
@@ -21,7 +21,7 @@ class Room {
 	}
 
 	place(x, y, id) {
-		if (this.users.indexOf(id) !== this.turn) return;
+		if (this.users.indexOf(id) !== this.turn || x > 14 || y > 14 || x < 0 || y < 0) return;
 
 		this.board[y][x] = this.turn;
 		wsServer.to(this.users).emit("game", { type: "place", x, y, turn: this.turn });
@@ -67,7 +67,19 @@ class Room {
 
 const rooms = [];
 
-wsServer.on("connection", (socket) => {
+app.use("/", express.static(path.join(__dirname, "pages")));
+app.use("/styles", express.static(path.join(__dirname, "css")));
+app.use("/scripts", express.static(path.join(__dirname, "js")));
+app.use("/assets", express.static(path.join(__dirname, "assets")));
+
+app.get("/room_list", (req, res) => res.json(rooms.filter((r) => r.users.length < 2)));
+app.get("/create_room/:roomName", (req, res) => {
+	const { roomName } = req.params;
+	rooms.push(new Room(roomName));
+	res.sendStatus(200);
+});
+
+io.on("connection", (socket) => {
 	let room;
 
 	socket.once("room", (roomName) => {
@@ -89,13 +101,11 @@ wsServer.on("connection", (socket) => {
 
 			if (room.users.length === 2) {
 				room.users.forEach((u, i) =>
-					wsServer
-						.to(u)
-						.emit("room", {
-							type: "start",
-							turn: i,
-							opponent: room.users[i === 0 ? 1 : 0]
-						})
+					wsServer.to(u).emit("room", {
+						type: "start",
+						turn: i,
+						opponent: room.users[i === 0 ? 1 : 0]
+					})
 				);
 			} else {
 				socket.emit("room", { type: "success" });
@@ -117,26 +127,19 @@ wsServer.on("connection", (socket) => {
 
 	const startGame = () => {
 		socket.on("game", (x, y) => room.place(x, y, socket.id));
-		socket.on("disconnect", () => {
+	};
+
+	socket.on("disconnect", () => {
+		if (room && room.users.length > 1) {
 			socket.emit("game", {
 				type: "win",
 				winner: room.users.find((v) => v !== socket.id)
 			});
-			rooms.splice(rooms.indexOf(this), 1);
-		});
-	};
+		}
+		rooms.splice(rooms.indexOf(this), 1);
+	});
 });
 
-app.use("/", express.static(path.join(__dirname, "pages")));
-app.use("/styles", express.static(path.join(__dirname, "css")));
-app.use("/scripts", express.static(path.join(__dirname, "js")));
-app.use("/assets", express.static(path.join(__dirname, "assets")));
-
-app.get("/room_list", (req, res) => res.json(rooms.filter((r) => r.users.length < 2)));
-app.get("/create_room/:roomName", (req, res) => {
-	const { roomName } = req.params;
-	rooms.push(new Room(roomName));
-	res.sendStatus(200);
-});
-
-app.listen(process.env.PORT, () => console.log("Server is running on port " + process.env.PORT));
+server.listen(Number(process.env.PORT), () =>
+	console.log("Server is running on port " + process.env.PORT)
+);

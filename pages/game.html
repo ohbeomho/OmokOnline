@@ -1,29 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Omok Online</title>
-		<link rel="stylesheet" href="/styles/main.css" />
-		<link rel="stylesheet" href="/styles/game.css" />
-	</head>
 
-	<body>
-		<h3 class="message"></h3>
-		<div class="container">
-			<div class="black">
-				<img src="/assets/user.png" alt="user" />
-				<div class="id"></div>
-			</div>
-			<!-- TODO: Make table -->
-			<table></table>
-			<div class="white">
-				<img src="/assets/user.png" alt="user" />
-				<div class="id"></div>
-			</div>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Omok Online</title>
+	<link rel="stylesheet" href="/styles/main.css" />
+	<link rel="stylesheet" href="/styles/game.css" />
+</head>
+
+<body>
+	<h3 class="message"></h3>
+	<div class="container">
+		<div class="black">
+			<img class="profile" src="/assets/user.png" alt="user" />
+			<div class="id"></div>
 		</div>
+		<div style="position: relative">
+			<table class="click"></table>
+			<table class="view"></table>
+		</div>
+		<div class="white">
+			<img class="profile" src="/assets/user.png" alt="user" />
+			<div class="id"></div>
+		</div>
+	</div>
 
-		<script src="/socket.io/socket.io.js"></script>
-		<script src="/scripts/game.js"></script>
-	</body>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="/scripts/game.js"></script>
+</body>
+
 </html>

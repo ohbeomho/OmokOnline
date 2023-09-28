@@ -1,14 +1,14 @@
 .container {
 	width: 90vw;
 	max-width: 1000px;
-	display: flex;
+	display: none;
 	justify-content: center;
 	align-items: center;
 	flex-wrap: wrap;
 }
 
-.black,
-.white {
+div.black,
+div.white {
 	padding: 20px;
 	border-radius: 10px;
 	display: flex;
@@ -18,19 +18,19 @@
 	position: relative;
 }
 
-.black,
-.black.me::before {
+div.black,
+div.black.me::before {
 	background-color: black;
 	color: white;
 }
 
-.white,
-.white.me::before {
+div.white,
+div.white.me::before {
 	background-color: white;
 }
 
-.black.me::before,
-.white.me::before {
+div.black.me::before,
+div.white.me::before {
 	content: "나";
 	display: block;
 	position: absolute;
@@ -38,4 +38,55 @@
 	padding: 4px;
 	top: -44px;
 	border-radius: 3px 3px 0 0;
+}
+
+table.click {
+	opacity: 0;
+	border-collapse: collapse;
+}
+
+table.click td {
+	border-radius: 50%;
+	opacity: 0;
+	border: 1px solid transparent;
+}
+
+table.click td:hover {
+	opacity: 0.4;
+}
+
+table.click td.placed:hover {
+	opacity: 1;
+}
+
+table.click td.black {
+	background-color: black;
+}
+
+table.click td.white {
+	background-color: white;
+}
+
+table.view {
+	border-collapse: collapse;
+	border: 1px solid black;
+	box-shadow: 0 0 0 10px rgb(138, 72, 46);
+	position: absolute;
+	top: 20px;
+	left: 20px;
+}
+
+table.view td {
+	background-color: rgb(138, 72, 46);
+	border: 1px solid black;
+}
+
+td {
+	padding: 20px;
+}
+
+.profile {
+	width: 20px;
+	height: 20px;
+	border: 1px solid rgb(69, 69, 69);
 }
