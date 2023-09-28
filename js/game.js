@@ -1,8 +1,8 @@
 const socket = io();
 const roomName = decodeURIComponent(new URLSearchParams(location.search).get("room"));
 const message = document.querySelector(".message");
-const black = document.querySelector(".black");
-const white = document.querySelector(".white");
+const black = document.querySelector("div.black");
+const white = document.querySelector("div.white");
 const clickTable = document.querySelector("table.click");
 const viewTable = document.querySelector("table.view");
 let myTurn,
@@ -25,7 +25,12 @@ function makeTable() {
 
 		for (let x = 0; x < 15; x++) {
 			const column = document.createElement("td");
-			column.addEventListener("click", () => opponent && socket.emit("game", x, 14));
+			column.addEventListener("click", () => {
+				if (placed || !opponent) return;
+
+				socket.emit("game", x, y);
+				placed = true;
+			});
 			column.classList.add(myTurn === 0 ? "black" : "white");
 			row.appendChild(column);
 		}
@@ -49,9 +54,12 @@ function startGame() {
 	}
 
 	socket.on("game", (data) => {
+		console.log(data);
+
 		switch (data.type) {
 			case "win":
 				win(data.winner);
+				break;
 			case "place":
 				const { x, y, turn } = data;
 				place(x, y, turn);
@@ -74,7 +82,9 @@ function win(winner) {
 function place(x, y, turn) {
 	if (turn !== myTurn) placed = false;
 
-	const target = clickTable.querySelectorAll("tr")[y].querySelectorAll("td")[x];
+	const target = Array.from(
+		Array.from(clickTable.querySelectorAll("tr"))[y].querySelectorAll("td")
+	)[x];
 	const clone = target.cloneNode(true);
 	clone.className = "";
 	clone.classList.add("placed", turn === 0 ? "black" : "white");
@@ -91,9 +101,9 @@ socket.on("room", (data) => {
 			message.innerText = "상대 접속 대기중...";
 			break;
 		case "start":
-			({ myTurn, opponent } = data);
-			console.log(myTurn);
+			({ turn: myTurn, opponent } = data);
 			socket.emit("start");
+			socket.removeAllListeners("room");
 			startGame();
 		default:
 	}

@@ -1,10 +1,8 @@
 .container {
-	width: 90vw;
-	max-width: 1000px;
+	width: 100vw;
 	display: none;
 	justify-content: center;
 	align-items: center;
-	flex-wrap: wrap;
 }
 
 div.black,
@@ -36,13 +34,14 @@ div.white.me::before {
 	position: absolute;
 	font-size: 16px;
 	padding: 4px;
-	top: -44px;
+	top: -24px;
 	border-radius: 3px 3px 0 0;
 }
 
 table.click {
-	opacity: 0;
 	border-collapse: collapse;
+	position: relative;
+	z-index: 1;
 }
 
 table.click td {
@@ -55,6 +54,7 @@ table.click td:hover {
 	opacity: 0.4;
 }
 
+table.click td.placed,
 table.click td.placed:hover {
 	opacity: 1;
 }

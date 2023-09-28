@@ -41,8 +41,6 @@ function getRoomList() {
 				return;
 			}
 
-			console.log(rooms);
-
 			rooms.forEach((r) => createRoomElement(r.name, r.users[0]));
 		})
 		.catch((err) => alert(err))
