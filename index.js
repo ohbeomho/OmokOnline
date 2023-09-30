@@ -13,6 +13,7 @@ class Room {
 	constructor(name) {
 		this.name = name;
 		this.users = [];
+		this.spectators = [];
 		this.board = new Array(15);
 		this.turn = 0;
 
@@ -24,7 +25,7 @@ class Room {
 		if (this.users.indexOf(user) !== this.turn || x > 14 || y > 14 || x < 0 || y < 0) return;
 
 		this.board[y][x] = this.turn;
-		io.to(this.users.map((user) => user.id)).emit("game", {
+		io.to(this.name).emit("game", {
 			type: "place",
 			x,
 			y,
@@ -69,6 +70,22 @@ class Room {
 			}
 		}
 
+		for (let y = 0; y <= 10; y++) {
+			for (let x = 0; x <= 10; x++) {
+				const five = [];
+				for (let i = 0; i < 5; i++) five.push(this.board[y + i][x + i]);
+				if (five.every((v) => typeof v === "number" && v === five[0]))
+					win(this.users[five[0]], { type: "d", x, y });
+			}
+
+			for (let x = 14; x >= 4; x--) {
+				const five = [];
+				for (let i = 0; i < 5; i++) five.push(this.board[y + i][x - i]);
+				if (five.every((v) => typeof v === "number" && v === five[0]))
+					win(this.users[five[0]], { type: "rd", x, y });
+			}
+		}
+
 		if (!this.board.find((v) => typeof v !== "number")) win(undefined, undefined);
 	}
 }
@@ -80,32 +97,52 @@ app.use("/styles", express.static(path.join(__dirname, "css")));
 app.use("/scripts", express.static(path.join(__dirname, "js")));
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 
-app.get("/room_list", (req, res) => res.json(rooms.filter((r) => r.users.length < 2)));
+app.get("/room_list", (req, res) => res.json(rooms));
 app.get("/create_room/:roomName", (req, res) => {
 	const { roomName } = req.params;
+
+	if (rooms.find((room) => room.name === roomName)) {
+		res.sendStatus(409);
+		return;
+	}
+
 	rooms.push(new Room(roomName));
 	res.sendStatus(200);
 });
 
 io.on("connection", (socket) => {
-	let room, user;
+	let room, user, spec;
 
-	socket.once("room", (roomName, username) => {
+	socket.once("room", (roomName, username, spectate) => {
 		const targetRoom = rooms.find((r) => r.name === roomName);
 		if (!targetRoom)
 			socket.emit("room", {
 				type: "error",
 				message: "참가하려는 방은 존재하지 않는 방입니다."
 			});
-		else if (targetRoom.users.length === 2)
+		else if (targetRoom.users.length === 2 && !spectate)
 			socket.emit("room", {
 				type: "error",
 				message: "참가하려는 방은 이미 게임이 진행중입니다."
 			});
+		else if (targetRoom.users.length === 1 && spectate)
+			socket.emit("room", {
+				type: "error",
+				message: "관전하려는 방은 게임이 시작되지 않았습니다."
+			});
 		else {
 			room = targetRoom;
 			user = { id: socket.id, username };
-			room.users.push(user);
+			spec = spectate;
+			if (spectate) {
+				room.spectators.push(user);
+				room.users.forEach((user) => io.to(user.id).emit("game", { type: "join-spec" }));
+				socket.emit("room", {
+					type: "room-info",
+					room
+				});
+			} else room.users.push(user);
+
 			socket.join(roomName);
 
 			if (room.users.length === 2)
@@ -133,11 +170,13 @@ io.on("connection", (socket) => {
 	const startGame = () => socket.on("game", (x, y) => room.place(x, y, user));
 
 	socket.on("disconnect", () => {
-		if (room && room.users.length > 1) {
+		if (room && room.users.length > 1 && !spec) {
 			const other = room.users.find((v) => v.id !== socket.id);
 			socket.to(other.id).emit("game", { type: "disconnect" });
+			rooms.splice(rooms.indexOf(this), 1);
+		} else if (spec) {
+			room.users.forEach((user) => io.to(user.id).emit("game", { type: "leave-spec" }));
 		}
-		rooms.splice(rooms.indexOf(this), 1);
 	});
 });
 

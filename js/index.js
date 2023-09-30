@@ -9,7 +9,7 @@ const joinUsernameInput = document.getElementById("joinUsername");
 
 let joinRoomName;
 
-function createRoomElement(roomName, user) {
+function createRoomElement(roomName, user, isFull) {
 	const roomElement = document.createElement("div");
 	roomElement.classList.add("room");
 	roomElement.innerHTML = `
@@ -19,13 +19,20 @@ function createRoomElement(roomName, user) {
 			${user}
 		</div>
 		<div class="buttons">
-			<button class="join">참가</button>
+			<button class="${isFull ? "spectate" : "join"}">${isFull ? "관전" : "참가"}</button>
 		</div>
 	`;
-	roomElement.querySelector("button").addEventListener("click", () => {
+	roomElement.querySelector("button.join")?.addEventListener("click", () => {
 		joinRoomName = roomName;
 		joinRoomDialog.showModal();
 	});
+	roomElement
+		.querySelector("button.spectate")
+		?.addEventListener("click", () =>
+			location.assign(
+				`/game.html?room=${encodeURIComponent(roomName)}&user=SPECTATOR&spec=true`
+			)
+		);
 	roomList.appendChild(roomElement);
 }
 
@@ -47,16 +54,12 @@ function getRoomList() {
 				return;
 			}
 
-			rooms.forEach((r) => createRoomElement(r.name, r.users[0].username));
+			rooms.forEach((r) =>
+				createRoomElement(r.name, r.users[0].username, r.users.length === 2)
+			);
 		})
 		.catch((err) => alert(err))
 		.finally(() => (fetching = false));
-}
-
-function mobileMessage() {
-	document.body.innerHTML = `
-		<h1>모바일 기기는 지원하지 않습니다.</h1>
-	`;
 }
 
 getRoomList();
@@ -84,13 +87,18 @@ createRoomDialog.querySelector("button.ok").addEventListener("click", (e) => {
 	}
 
 	fetch("/create_room/" + roomName)
-		.then(() =>
+		.then((res) => {
+			if (res.status === 409) {
+				alert(`이름이 ${roomName}인 방이 이미 존재합니다.`);
+				return;
+			}
+
 			location.assign(
 				`/game.html?room=${encodeURIComponent(roomName)}&user=${encodeURIComponent(
 					username
 				)}`
-			)
-		)
+			);
+		})
 		.catch((err) => alert(err))
 		.finally(() => createRoomDialog.close());
 });

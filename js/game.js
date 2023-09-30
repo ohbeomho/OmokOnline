@@ -2,16 +2,20 @@ const socket = io();
 const params = new URLSearchParams(location.search);
 const roomName = decodeURIComponent(params.get("room"));
 const username = decodeURIComponent(params.get("user"));
+const spectate = params.get("spec") === "true";
 const message = document.querySelector(".message");
 const black = document.querySelector("div.black");
 const white = document.querySelector("div.white");
 const clickTable = document.querySelector("table.click");
 const viewTable = document.querySelector("table.view");
+const spectators = document.querySelector(".spectators");
 const clickElements = [];
 let myTurn,
 	myElement,
 	opponent,
 	opponentElement,
+	room,
+	spectatorCount = 0,
 	placed = false;
 
 function makeTable() {
@@ -31,14 +35,16 @@ function makeTable() {
 
 		for (let x = 0; x < 15; x++) {
 			const column = document.createElement("td");
-			column.addEventListener("click", () => {
-				if (placed || !opponent) return;
+			if (!spectate)
+				column.addEventListener("click", () => {
+					if (placed || !opponent) return;
 
-				socket.emit("game", x, y);
-				placed = true;
+					socket.emit("game", x, y);
+					placed = true;
 
-				message.innerText = "상대의 차례입니다.";
-			});
+					message.innerText = "상대의 차례입니다.";
+				});
+
 			column.classList.add(myTurn === 0 ? "black" : "white");
 			tableRow.appendChild(column);
 			row.push(column);
@@ -49,27 +55,37 @@ function makeTable() {
 	}
 }
 
+function setSpectatorCount() {
+	spectators.querySelector(".count").innerText = spectatorCount;
+}
+
 function startGame() {
 	message.innerText = "";
 	const arr = [black, white];
-	myElement = arr[myTurn];
-	opponentElement = myElement === black ? white : black;
-	myElement.classList.add("me");
+
+	if (!spectate) {
+		myElement = arr[myTurn];
+		opponentElement = myElement === black ? white : black;
+		myElement.classList.add("me");
+	}
 
 	const usernameArr = arr.map((e) => e.querySelector(".username"));
-	if (myTurn === 0) {
-		usernameArr[0].innerText = username;
-		usernameArr[1].innerText = opponent.username;
-		message.innerText = "당신의 차례입니다.";
+	if (!spectate) {
+		if (myTurn === 0) {
+			usernameArr[0].innerText = username;
+			usernameArr[1].innerText = opponent.username;
+			message.innerText = "당신의 차례입니다.";
+		} else {
+			usernameArr[1].innerText = username;
+			usernameArr[0].innerText = opponent.username;
+			message.innerText = "상대의 차례입니다.";
+		}
 	} else {
-		usernameArr[1].innerText = username;
-		usernameArr[0].innerText = opponent.username;
-		message.innerText = "상대의 차례입니다.";
+		usernameArr[0].innerText = room.users[0].username;
+		usernameArr[1].innerText = room.users[1].username;
 	}
 
 	socket.on("game", (data) => {
-		console.log(data);
-
 		switch (data.type) {
 			case "win":
 				const { winner, highlight } = data;
@@ -81,11 +97,27 @@ function startGame() {
 				break;
 			case "disconnect":
 				disconnected();
+			case "join-spec":
+				spectatorCount++;
+				setSpectatorCount();
+				break;
+			case "leave-spec":
+				spectatorCount--;
+				setSpectatorCount();
+				break;
 			default:
 		}
 	});
 
 	makeTable();
+
+	if (spectate) {
+		for (let y = 0; y < 15; y++) {
+			for (let x = 0; x < 15; x++)
+				if (typeof room.board[y][x] === "number") place(x, y, room.board[y][x]);
+		}
+	}
+
 	document.querySelector(".container").style.display = "flex";
 }
 
@@ -107,22 +139,27 @@ function win(winner, highlight) {
 			}</p>
 		`;
 
-		(winner.id === socket.id ? myElement : opponentElement).classList.add("win");
+		if (!spectate) (winner.id === socket.id ? myElement : opponentElement).classList.add("win");
+		else
+			[black, white][
+				room.users.indexOf(room.users.find((user) => user.id === winner.id))
+			].classList.add("win");
 
 		const { x: hx, y: hy, type } = highlight;
-		let highlightElements;
+		let highlightElements = [];
 
 		switch (type) {
 			case "h":
 				highlightElements = clickElements[hy].slice(hx, hx + 5);
 				break;
 			case "v":
-				highlightElements = [];
 				for (let y = hy; y <= hy + 4; y++) highlightElements.push(clickElements[y][hx]);
 				break;
 			case "d":
-				highlightElements = [];
 				for (let i = 0; i < 5; i++) highlightElements.push(clickElements[hy + i][hx + i]);
+				break;
+			case "rd":
+				for (let i = 0; i < 5; i++) highlightElements.push(clickElements[hy + i][hx - i]);
 			default:
 		}
 
@@ -182,7 +219,16 @@ socket.on("room", (data) => {
 			socket.emit("start");
 			socket.removeAllListeners("room");
 			startGame();
+			break;
+		case "room-info":
+			room = data.room;
+			startGame();
 		default:
 	}
 });
-socket.emit("room", roomName, username);
+socket.emit("room", roomName, username, spectate);
+
+if (spectate) {
+	message.replaceWith(returnButton);
+	spectators.remove();
+}
