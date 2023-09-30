@@ -168,7 +168,7 @@ function win(winner, highlight) {
 		);
 	}
 
-	message.appendChild(returnButton);
+	if (!spectate) message.appendChild(returnButton);
 	socket.disconnect();
 }
 
