@@ -10,73 +10,80 @@ const joinUsernameInput = document.getElementById("joinUsername");
 let joinRoomName;
 
 function createRoomElement(roomName, users) {
-    const isFull = users.length === 2;
+  const isFull = users.length === 2;
 
-    const roomElement = document.createElement("div");
-    roomElement.classList.add("room");
-    roomElement.innerHTML = `
+  const roomElement = document.createElement("div");
+  roomElement.classList.add("room");
+  roomElement.innerHTML = `
 		<div class="name">
 			<span>${roomName}</span>
 			${isFull ? "<span style='color: rgb(0, 125, 0)'>게임 진행 중</span>" : ""}
 		</div>
 		<div class="user">
 			${users
-                .map((user) => `<span><img class="profile" src="/assets/user.png" />${user}</span>`)
-                .join("")}
+        .map(
+          (user) =>
+            `<span><img class="profile" src="/assets/user.png" />${user}</span>`,
+        )
+        .join("")}
 		</div>
 		<div class="buttons">
-			<button class="${isFull ? "spectate" : "join"}">${isFull ? "관전" : "참가"}</button>
+			<button class="${isFull ? "spectate" : "join"}">${
+        isFull ? "관전" : "참가"
+      }</button>
 		</div>
 	`;
-    roomElement.querySelector("button.join")?.addEventListener("click", () => {
-        joinRoomName = roomName;
-        joinRoomDialog.showModal();
-    });
-    roomElement
-        .querySelector("button.spectate")
-        ?.addEventListener("click", () =>
-            location.assign(
-                `/game.html?room=${encodeURIComponent(roomName)}&user=SPECTATOR&spec=true`
-            )
-        );
-    roomList.appendChild(roomElement);
+  roomElement.querySelector("button.join")?.addEventListener("click", () => {
+    joinRoomName = roomName;
+    joinRoomDialog.showModal();
+  });
+  roomElement
+    .querySelector("button.spectate")
+    ?.addEventListener("click", () =>
+      location.assign(
+        `/game.html?room=${encodeURIComponent(
+          roomName,
+        )}&user=SPECTATOR&spec=true`,
+      ),
+    );
+  roomList.appendChild(roomElement);
 }
 
 let fetching = false;
 
 function getRoomList() {
-    if (fetching) {
+  if (fetching) {
+    return;
+  }
+
+  fetching = true;
+  roomList.innerHTML = "";
+
+  fetch("/room_list")
+    .then((res) => res.json())
+    .then((rooms) => {
+      if (!rooms.length) {
+        roomList.innerHTML = "<div>참가 가능한 방이 없습니다.</div>";
         return;
-    }
+      }
 
-    fetching = true;
-    roomList.innerHTML = "";
+      rooms
+        .sort((a, b) => {
+          const u = a.users.length - b.users.length;
+          const n = a.name.localeCompare(b.name);
 
-    fetch("/room_list")
-        .then((res) => res.json())
-        .then((rooms) => {
-            if (!rooms.length) {
-                roomList.innerHTML = "<div>참가 가능한 방이 없습니다.</div>";
-                return;
-            }
-
-            rooms
-                .sort((a, b) => {
-                    const u = a.users.length - b.users.length;
-                    const n = a.name.localeCompare(b.name);
-
-                    if (u === 0) return n;
-                    return u;
-                })
-                .forEach((r) =>
-                    createRoomElement(
-                        r.name,
-                        r.users.map((user) => user.username)
-                    )
-                );
+          if (u === 0) return n;
+          return u;
         })
-        .catch((err) => alert(err))
-        .finally(() => (fetching = false));
+        .forEach((r) =>
+          createRoomElement(
+            r.name,
+            r.users.map((user) => user.username),
+          ),
+        );
+    })
+    .catch((err) => alert(err))
+    .finally(() => (fetching = false));
 }
 
 getRoomList();
@@ -86,59 +93,65 @@ createRoomButton.addEventListener("click", () => createRoomDialog.showModal());
 
 const closeButtons = document.querySelectorAll("button.close");
 closeButtons.forEach((button) =>
-    button.addEventListener("click", () => button.parentElement.parentElement.close())
+  button.addEventListener("click", () =>
+    button.parentElement.parentElement.close(),
+  ),
 );
 
 createRoomDialog.querySelector("button.ok").addEventListener("click", (e) => {
-    const roomName = roomNameInput.value.trim();
-    const username = createUsernameInput.value.trim();
+  const roomName = roomNameInput.value.trim();
+  const username = createUsernameInput.value.trim();
 
-    let errorMessage;
+  let errorMessage;
 
-    if (!roomName) errorMessage = "방 이름을 입력해 주세요.";
-    else if (!username) errorMessage = "사용자명을 입력해 주세요.";
-    else if (username.length > 15) errorMessage = "사용자명은 15자보다 짧아야 합니다.";
+  if (!roomName) errorMessage = "방 이름을 입력해 주세요.";
+  else if (!username) errorMessage = "사용자명을 입력해 주세요.";
+  else if (username.length > 15)
+    errorMessage = "사용자명은 15자보다 짧아야 합니다.";
 
-    if (errorMessage) {
-        alert(errorMessage);
+  if (errorMessage) {
+    alert(errorMessage);
+    return;
+  }
+
+  fetch("/create_room/" + roomName)
+    .then((res) => {
+      if (res.status === 409) {
+        alert(`이름이 ${roomName}인 방이 이미 존재합니다.`);
         return;
-    }
+      }
 
-    fetch("/create_room/" + roomName)
-        .then((res) => {
-            if (res.status === 409) {
-                alert(`이름이 ${roomName}인 방이 이미 존재합니다.`);
-                return;
-            }
-
-            location.assign(
-                `/game.html?room=${encodeURIComponent(roomName)}&user=${encodeURIComponent(
-                    username
-                )}`
-            );
-        })
-        .catch((err) => alert(err))
-        .finally(() => createRoomDialog.close());
+      location.assign(
+        `/game.html?room=${encodeURIComponent(
+          roomName,
+        )}&user=${encodeURIComponent(username)}`,
+      );
+    })
+    .catch((err) => alert(err))
+    .finally(() => createRoomDialog.close());
 });
 
 joinRoomDialog.querySelector("button.ok").addEventListener("click", (e) => {
-    const username = joinUsernameInput.value.trim();
+  const username = joinUsernameInput.value.trim();
 
-    if (!joinRoomName) {
-        joinRoomDialog.close();
-        return;
-    }
+  if (!joinRoomName) {
+    joinRoomDialog.close();
+    return;
+  }
 
-    let errorMessage;
-    if (!username) errorMessage = "사용자명을 입력해 주세요.";
-    else if (username.length > 15) errorMessage = "사용자명은 15자보다 짧아야 합니다.";
+  let errorMessage;
+  if (!username) errorMessage = "사용자명을 입력해 주세요.";
+  else if (username.length > 15)
+    errorMessage = "사용자명은 15자보다 짧아야 합니다.";
 
-    if (errorMessage) {
-        alert(errorMessage);
-        return;
-    }
+  if (errorMessage) {
+    alert(errorMessage);
+    return;
+  }
 
-    location.assign(
-        `/game.html?room=${encodeURIComponent(joinRoomName)}&user=${encodeURIComponent(username)}`
-    );
+  location.assign(
+    `/game.html?room=${encodeURIComponent(
+      joinRoomName,
+    )}&user=${encodeURIComponent(username)}`,
+  );
 });
