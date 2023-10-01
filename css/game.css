@@ -45,7 +45,7 @@ div.white.me::before {
 
 div.black.me.win::before,
 div.white.me.win::before {
-	top: -33px;
+	top: -32.5px;
 	border: 4px solid rgb(50, 200, 50);
 	border-bottom: none;
 }
@@ -62,7 +62,7 @@ table.click td {
 	border: 1px solid transparent;
 }
 
-table.click td:hover {
+table.click td:not(.end):hover {
 	opacity: 0.4;
 }
 
