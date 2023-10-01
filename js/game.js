@@ -46,6 +46,8 @@ function makeTable() {
         });
 
       column.classList.add(myTurn === 0 ? "black" : "white");
+      if (spectate) column.classList.add("end");
+
       tableRow.appendChild(column);
       row.push(column);
     }
