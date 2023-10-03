@@ -34,7 +34,7 @@ div.white.me::before {
 
 div.black.me::before,
 div.white.me::before {
-  content: "나";
+  content: '나';
   display: block;
   position: absolute;
   font-size: 16px;
