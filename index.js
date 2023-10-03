@@ -168,9 +168,8 @@ io.on('connection', (socket) => {
     if (room) {
       if (room.users.length > 1 && !spec) socket.to(room.name).emit('game', { type: 'disconnect', user })
 
-      rooms.splice(rooms.indexOf(this), 1)
-    } else if (spec) {
-      room.users.forEach((user) => io.to(user.id).emit('game', { type: 'leave-spec' }))
+      if (spec) room.users.forEach((user) => io.to(user.id).emit('game', { type: 'leave-spec' }))
+      else rooms.splice(rooms.indexOf(this), 1)
     }
   })
 })

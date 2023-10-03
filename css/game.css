@@ -1,8 +1,21 @@
+body {
+  gap: 20px;
+}
+
 .container {
   width: 100vw;
   display: none;
   justify-content: center;
   align-items: center;
+}
+
+.container.column {
+  flex-direction: column;
+  gap: 30px;
+}
+
+.container.column.reverse {
+  flex-direction: column-reverse;
 }
 
 div.black,
@@ -19,6 +32,11 @@ div.white {
 div.black.win,
 div.white.win {
   box-shadow: 0 0 0 4px rgb(50, 200, 50);
+}
+
+div.black.turn,
+div.white.turn {
+  box-shadow: 0 0 0 4px orange;
 }
 
 div.black,
@@ -50,6 +68,18 @@ div.white.me.win::before {
   border-bottom: none;
 }
 
+div.black.me.turn::before,
+div.white.me.turn::before {
+  top: -32.5px;
+  border: 4px solid orange;
+  border-bottom: none;
+}
+
+.container.column div.black::before,
+.container.column div.white::before {
+  display: none;
+}
+
 table.click {
   border-collapse: collapse;
   position: relative;
@@ -59,7 +89,7 @@ table.click {
 table.click td {
   border-radius: 50%;
   opacity: 0;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
 }
 
 table.click td:not(.end):hover {
@@ -69,6 +99,10 @@ table.click td:not(.end):hover {
 table.click td.placed,
 table.click td.placed:hover {
   opacity: 1;
+}
+
+table.click td.placed.recent {
+  box-shadow: 0 0 0 4px orange;
 }
 
 table.click td.black {
@@ -81,7 +115,7 @@ table.click td.white {
 
 table.view {
   border-collapse: collapse;
-  border: 1px solid black;
+  border: 1.5px solid black;
   box-shadow: 0 0 0 10px rgb(138, 72, 46);
   position: absolute;
   top: 20px;
@@ -90,7 +124,7 @@ table.view {
 
 table.view td {
   background-color: rgb(138, 72, 46);
-  border: 1px solid black;
+  border: 1.5px solid black;
 }
 
 td {
@@ -107,4 +141,8 @@ td {
   position: absolute;
   top: 5px;
   left: 5px;
+}
+
+.message {
+  margin-bottom: 20px;
 }

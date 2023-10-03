@@ -72,6 +72,8 @@ function startGame() {
     myElement.classList.add('me')
   }
 
+  black.classList.add('turn')
+
   const usernameArr = arr.map((e) => e.querySelector('.username'))
   if (!spectate) {
     if (myTurn === 0) {
@@ -122,6 +124,7 @@ function startGame() {
   }
 
   document.querySelector('.container').style.display = 'flex'
+  changeLayout()
 }
 
 const returnButton = document.createElement('button')
@@ -130,6 +133,8 @@ returnButton.addEventListener('click', () => location.assign('/'))
 
 function win(winner, highlight) {
   removeClickEvents()
+
+  document.querySelector('.turn')?.classList.remove('turn')
 
   if (winner === undefined) message.innerHTML = '<h3>무승부입니다</h3>'
   else {
@@ -173,6 +178,7 @@ function win(winner, highlight) {
   }
 
   if (!spectate) message.appendChild(returnButton)
+  changeLayout()
   socket.disconnect()
 }
 
@@ -201,10 +207,16 @@ function place(x, y, turn) {
     message.innerText = '당신의 차례입니다.'
   }
 
+  const arr = [black, white]
+  arr[turn].classList.remove('turn')
+  arr[turn === 0 ? 1 : 0].classList.add('turn')
+
+  document.querySelector('td.recent')?.classList.remove('recent')
+
   const target = clickElements[y][x]
   const clone = target.cloneNode(true)
   clone.className = ''
-  clone.classList.add('placed', turn === 0 ? 'black' : 'white')
+  clone.classList.add('placed', turn === 0 ? 'black' : 'white', 'recent')
   target.replaceWith(clone)
   clickElements[y][x] = clone
 }
@@ -238,4 +250,27 @@ if (spectate) {
   spectators.remove()
 }
 
-window.addEventListener('resize', () => {})
+function changeLayout() {
+  const totalWidth = black.clientWidth + white.clientWidth + clickTable.clientWidth
+
+  if (totalWidth > window.innerWidth && !container.classList.contains('column')) {
+    container.classList.add('column')
+    if (myTurn === 0) container.classList.add('reverse')
+  } else if (totalWidth < window.innerWidth) container.classList.remove('column', 'reverse')
+
+  let scale =
+    window.innerWidth < window.innerHeight
+      ? window.innerWidth / clickTable.clientWidth
+      : window.innerHeight / clickTable.clientHeight
+  if (scale > 1) scale = 1
+  const tableContainer = clickTable.parentElement
+  tableContainer.style.scale = scale
+
+  const s = document.querySelector('.space')
+  s.style.width = clickTable.clientWidth * scale + 'px'
+  s.style.height = clickTable.clientHeight * scale + 'px'
+  tableContainer.style.left = s.offsetLeft + 'px'
+  tableContainer.style.top = s.offsetTop + 'px'
+}
+
+window.addEventListener('resize', changeLayout)

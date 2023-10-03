@@ -9,6 +9,10 @@ const joinUsernameInput = document.getElementById('joinUsername')
 
 let joinRoomName
 
+function isTouchDevice() {
+  return 'ontouchstart' in window
+}
+
 function createRoomElement(roomName, users) {
   const isFull = users.length === 2
 
@@ -17,24 +21,41 @@ function createRoomElement(roomName, users) {
   roomElement.innerHTML = `
 		<div class="name">
 			<span>${roomName}</span>
-			${isFull ? "<span style='color: rgb(0, 125, 0)'>게임 진행 중</span>" : ''}
+			${isFull ? "<span class='playing'>게임 진행 중</span>" : ''}
 		</div>
 		<div class="user">
 			${users.map((user) => `<span><img class="profile" src="/assets/user.png" />${user}</span>`).join('')}
 		</div>
-		<div class="buttons">
-			<button class="${isFull ? 'spectate' : 'join'}">${isFull ? '관전' : '참가'}</button>
-		</div>
+    ${
+      !isTouchDevice()
+        ? `
+        <div class="buttons">
+          <button class="${isFull ? 'spectate' : 'join'}">${isFull ? '관전' : '참가'}</button>
+        </div>
+      `
+        : ''
+    }
 	`
-  roomElement.querySelector('button.join')?.addEventListener('click', () => {
-    joinRoomName = roomName
-    joinRoomDialog.showModal()
-  })
-  roomElement
-    .querySelector('button.spectate')
-    ?.addEventListener('click', () =>
-      location.assign(`/game.html?room=${encodeURIComponent(roomName)}&user=SPECTATOR&spec=true`)
-    )
+
+  if (!isTouchDevice()) {
+    const button = roomElement.querySelector('button')
+    button.addEventListener('click', () => {
+      if (button.classList.contains('join')) {
+        joinRoomName = roomName
+        joinRoomDialog.showModal()
+      } else location.assign(`/game.html?room=${encodeURIComponent(roomName)}&user=SPECTATOR&spec=true`)
+    })
+  } else {
+    roomElement.addEventListener('click', () => {
+      if (isFull && confirm('관전하시겠습니까?'))
+        location.assign(`/game.html?room=${encodeURIComponent(roomName)}&user=SPECTATOR&spec=true`)
+      else if (!isFull && confirm('참여하시겠습니까?')) {
+        joinRoomName = roomName
+        joinRoomDialog.showModal()
+      }
+    })
+  }
+
   roomList.appendChild(roomElement)
 }
 
