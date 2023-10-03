@@ -128,13 +128,11 @@ function startGame() {
 }
 
 const returnButton = document.createElement('button')
-returnButton.innerText = '메인 화면으로'
 returnButton.addEventListener('click', () => location.assign('/'))
+returnButton.innerText = '메인 화면으로'
 
 function win(winner, highlight) {
-  removeClickEvents()
-
-  document.querySelector('.turn')?.classList.remove('turn')
+  clearElements()
 
   if (winner === undefined) message.innerHTML = '<h3>무승부입니다</h3>'
   else {
@@ -184,13 +182,14 @@ function win(winner, highlight) {
 
 function disconnected(user) {
   message.innerHTML = `<h2>${user.username}의 접속이 끊겼습니다.</h2>`
+  opponentElement.classList.add('disconnected')
   if (spectate) document.body.prepend(message)
   else message.appendChild(returnButton)
   socket.disconnect()
-  removeClickEvents()
+  clearElements()
 }
 
-function removeClickEvents() {
+function clearElements() {
   clickTable.querySelectorAll('tr').forEach((row, y) =>
     row.querySelectorAll('td').forEach((column, x) => {
       const newNode = document.createElement('td')
@@ -199,6 +198,9 @@ function removeClickEvents() {
       clickElements[y][x] = newNode
     })
   )
+
+  document.querySelector('.turn').classList.remove('turn')
+  document.querySelector('td.recent').classList.remove('recent')
 }
 
 function place(x, y, turn) {

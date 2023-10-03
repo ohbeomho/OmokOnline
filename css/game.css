@@ -11,6 +11,7 @@ body {
 
 .container.column {
   flex-direction: column;
+  align-items: stretch;
   gap: 30px;
 }
 
@@ -21,6 +22,7 @@ body {
 div.black,
 div.white {
   padding: 20px;
+  margin: 15px;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
@@ -39,6 +41,11 @@ div.white.turn {
   box-shadow: 0 0 0 4px orange;
 }
 
+div.black.disconnected,
+div.white.disconnected {
+  opacity: 0.5;
+}
+
 div.black,
 div.black.me::before {
   background-color: black;
@@ -54,6 +61,8 @@ div.black.me::before,
 div.white.me::before {
   content: '나';
   display: block;
+  min-width: 30px;
+  text-align: center;
   position: absolute;
   font-size: 16px;
   padding: 2px 4px;
@@ -102,7 +111,17 @@ table.click td.placed:hover {
 }
 
 table.click td.placed.recent {
-  box-shadow: 0 0 0 4px orange;
+  position: relative;
+}
+
+table.click td.placed.recent::before {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background-color: red;
+  width: 6px;
+  height: 6px;
+  translate: -50% -50%;
 }
 
 table.click td.black {
