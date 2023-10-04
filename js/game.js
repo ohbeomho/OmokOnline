@@ -271,8 +271,8 @@ function changeLayout() {
 
   let scale =
     window.innerWidth < window.innerHeight
-      ? window.innerWidth / clickTable.clientWidth
-      : window.innerHeight / clickTable.clientHeight
+      ? window.innerWidth / (clickTable.clientWidth + 50)
+      : window.innerHeight / (clickTable.clientHeight + 50)
   if (scale > 1) scale = 1
   const tableContainer = clickTable.parentElement
   tableContainer.style.scale = scale

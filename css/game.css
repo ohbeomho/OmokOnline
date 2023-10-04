@@ -144,7 +144,7 @@ table.view td {
 }
 
 .container.column table,
-.container.column table.view td {
+.container.column td {
   border-width: 2px;
 }
 
