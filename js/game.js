@@ -10,6 +10,7 @@ const white = document.querySelector('div.white')
 const clickTable = document.querySelector('table.click')
 const viewTable = document.querySelector('table.view')
 const spectators = document.querySelector('.spectators')
+const users = document.createElement('div')
 const clickElements = []
 let myTurn,
   myElement,
@@ -257,8 +258,16 @@ function changeLayout() {
 
   if (totalWidth > window.innerWidth && !container.classList.contains('column')) {
     container.classList.add('column')
-    if (myTurn === 0) container.classList.add('reverse')
-  } else if (totalWidth < window.innerWidth) container.classList.remove('column', 'reverse')
+    users.append(black, white)
+    container.prepend(users)
+  } else if (totalWidth < window.innerWidth && container.classList.contains('column')) {
+    container.classList.remove('column')
+    container.removeChild(users)
+    users.removeChild(black)
+    users.removeChild(white)
+    container.prepend(black)
+    container.appendChild(white)
+  }
 
   let scale =
     window.innerWidth < window.innerHeight
@@ -276,3 +285,4 @@ function changeLayout() {
 }
 
 window.addEventListener('resize', changeLayout)
+users.classList.add('users')
