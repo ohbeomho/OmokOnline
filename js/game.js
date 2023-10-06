@@ -255,12 +255,14 @@ if (spectate) {
 
 function changeLayout() {
   const totalWidth = black.clientWidth + white.clientWidth + clickTable.clientWidth
+  const w = window.visualViewport.width,
+    h = window.visualViewport.height
 
-  if (totalWidth > window.innerWidth && !container.classList.contains('column')) {
+  if (totalWidth > w && !container.classList.contains('column')) {
     container.classList.add('column')
     users.append(black, white)
     container.prepend(users)
-  } else if (totalWidth < window.innerWidth && container.classList.contains('column')) {
+  } else if (totalWidth < w && container.classList.contains('column')) {
     container.classList.remove('column')
     container.removeChild(users)
     users.removeChild(black)
@@ -269,10 +271,7 @@ function changeLayout() {
     container.appendChild(white)
   }
 
-  let scale =
-    window.innerWidth < window.innerHeight
-      ? window.innerWidth / (clickTable.clientWidth + 50)
-      : window.innerHeight / (clickTable.clientHeight + 50)
+  let scale = w < h ? w / (clickTable.clientWidth + 50) : h / (clickTable.clientHeight + 50)
   if (scale > 1) scale = 1
   const tableContainer = clickTable.parentElement
   tableContainer.style.scale = scale
