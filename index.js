@@ -41,7 +41,7 @@ class Room {
       rooms.splice(rooms.indexOf(this), 1);
     };
 
-    if (board.every((row) => !row.find((e) => typeof e !== "number"))) win(undefined, undefined);
+    if (board.every((row) => row.every((e) => typeof e === "number"))) win(undefined, undefined);
 
     for (let y = 0; y < 15; y++) {
       const line = this.board[y];
