@@ -41,12 +41,17 @@ class Room {
       rooms.splice(rooms.indexOf(this), 1);
     };
 
+    if (board.every((row) => !row.find((e) => typeof e !== "number"))) win(undefined, undefined);
+
     for (let y = 0; y < 15; y++) {
       const line = this.board[y];
 
       for (let x = 0; x <= 10; x++) {
         const five = line.slice(x, x + 5);
-        if (five.every((v) => typeof v === "number" && v === five[0])) win(this.users[five[0]], { type: "h", x, y });
+        if (five.every((v) => typeof v === "number" && v === five[0])) {
+          win(this.users[five[0]], { type: "h", x, y });
+          return;
+        }
       }
     }
 
@@ -55,7 +60,10 @@ class Room {
       for (let y = 0; y < 15; y++) line.push(this.board[y][x]);
       for (let y = 0; y <= 10; y++) {
         const five = line.slice(y, y + 5);
-        if (five.every((v) => typeof v === "number" && v === five[0])) win(this.users[five[0]], { type: "v", x, y });
+        if (five.every((v) => typeof v === "number" && v === five[0])) {
+          win(this.users[five[0]], { type: "v", x, y });
+          return;
+        }
       }
     }
 
@@ -63,15 +71,10 @@ class Room {
       for (let x = 0; x <= 10; x++) {
         const five = [];
         for (let i = 0; i < 5; i++) five.push(this.board[y + i][x + i]);
-        if (five.every((v) => typeof v === "number" && v === five[0])) win(this.users[five[0]], { type: "d", x, y });
-      }
-    }
-
-    for (let y = 0; y <= 10; y++) {
-      for (let x = 0; x <= 10; x++) {
-        const five = [];
-        for (let i = 0; i < 5; i++) five.push(this.board[y + i][x + i]);
-        if (five.every((v) => typeof v === "number" && v === five[0])) win(this.users[five[0]], { type: "d", x, y });
+        if (five.every((v) => typeof v === "number" && v === five[0])) {
+          win(this.users[five[0]], { type: "d", x, y });
+          return;
+        }
       }
 
       for (let x = 14; x >= 4; x--) {
@@ -80,8 +83,6 @@ class Room {
         if (five.every((v) => typeof v === "number" && v === five[0])) win(this.users[five[0]], { type: "rd", x, y });
       }
     }
-
-    if (!this.board.find((v) => typeof v !== "number")) win(undefined, undefined);
   }
 }
 
